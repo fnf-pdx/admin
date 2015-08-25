@@ -1,0 +1,6 @@
+{
+  "name": "fnf-admin-bower",
+  "dependencies": {
+    "bootstrap": "~3.3.5"
+  }
+}
