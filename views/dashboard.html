@@ -1,0 +1,59 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xs-12">
+        <div class="row">
+            <div class="col-xs-12 col-sm-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">Schedule TNT Show</div>
+                    <div class="panel-body">
+                    {% if tntWaitingList.length > 1 %}
+                        <p class="h3 text-center">{{ tntWaitingList[0].name.S }}<br>
+                            vs<br>
+                            {{ tntWaitingList[1].name.S }}
+                        </p>
+                        <form class="form-inline" method="post" action="/event/create">
+                            <div class="form-group">
+                                <input type="hidden" name="show" value="Thursday Night Throwdown">
+                                <input type="hidden" name="team1" value="{{ tntWaitingList[0].name.S }}">
+                                <input type="hidden" name="team2" value="{{ tntWaitingList[1].name.S }}">
+                                <input type="date" class="form-control" id="date" value="{{ date }}">
+                            </div>
+                            <button type="submit" class="btn btn-default right">Book</button>
+                        </form>
+                    {% else %}
+                        <p>need two teams on waiting list to book a show</p>
+                    {% endif %}
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">TNT Waiting List</div>
+                    {% if tntWaitingList.length %}
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Team Name</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for team in tntWaitingList %}
+                            <tr>
+                                <td>{{ team.position.N }}</td>
+                                <td>{{ team.name.S }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <div class="panel-body">
+                            <p>no teams registered</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

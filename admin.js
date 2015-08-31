@@ -12,9 +12,11 @@ AWS.config.region = 'us-west-2';
 var ddb = new AWS.DynamoDB();
 
 var models = require('fnf-models');
-var schedule = models.schedule(ddb);
+var teams = models.teams(ddb);
+var events = models.events(ddb);
 
-var calendarController = require('./controllers/calendar')(schedule);
+var dashboardController = require('./controllers/dashboard')(teams);
+var scheduleController = require('./controllers/schedule')(events, teams);
 
 var users = {
   admin: {
@@ -40,16 +42,14 @@ var server = new Hapi.Server();
 server.connection({ port: 8000 });
 
 var swig = require('swig');
-
-swig.setDefaults({
-  cache: false
-});
+swig.setDefaults({ cache: false });
 
 server.views({
+  isCached: false,
+  path: './views',
   engines: {
     html: swig
-  },
-  path: './views'
+  }
 });
 
 server.register([
@@ -98,16 +98,16 @@ server.register([
     path: '/',
     config: {
       auth: 'simple',
-      handler: calendarController
+      handler: dashboardController
     }
   });
 
   server.route({
-    method: 'GET',
-    path: '/{month}',
+    method: 'POST',
+    path: '/event/create',
     config: {
       auth: 'simple',
-      handler: calendarController
+      handler: scheduleController
     }
   });
 

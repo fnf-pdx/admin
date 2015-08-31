@@ -1,58 +1,49 @@
+'use strict';
+
 var moment = require('moment-timezone');
-var assign = require('lodash/object/assign');
 
-module.exports = function(waitingList, events) {
-
-  function form(request, reply, templateVars) {
-    waitingList.getByShow('tnt', function(err, teams) {
-      if (err) {
-        reply.view('scheduleForm', {message: 'failed to get waiting list'});
-        return;
-      }
-
-      templateVars = assign(
-        {
-          teams: teams,
-          today: moment().tz('America/Los_Angeles').format('YYYY-MM-DD')
-        },
-        templateVars
-      );
-
-      reply.view('scheduleForm', templateVars);
-    });
-  }
-
-  function save(request, reply) {
-    var date = moment(request.payload.date, 'America/Los_Angeles');
+module.exports = function(events, teams) {
+  return function(request, reply) {
+    var show = request.payload.show;
     var team1 = request.payload.team1;
     var team2 = request.payload.team2;
+    var timestamp = moment(request.payload.date, 'American/Los_Angeles').unix().toString();
 
-    events.addEvent('tnt', date, team1, team2, function (err) {
+    var event = {
+      show: {S: show},
+      team1: {S: team1},
+      team2: {S: team2},
+      timestamp: {N: timestamp}
+    };
+
+    events.create(event, function(err) {
       if (err) {
-        return form(request, reply, {status: 'failed', message: 'waiting list entry failed'});
+        console.log(err);
+        return reply.redirect('/');
       }
 
-      waitingList.deleteTeam(team1, function (err) {
+      teams.removeFromWaitingList(team1, function(err) {
         if (err) {
-          return form(request, reply, {status: 'failed', message: 'failed to remove ' + team1 + ' from waiting list'});
+          console.log(err);
+          return reply.redirect('/');
         }
 
-        waitingList.deleteTeam(team2, function (err) {
+        teams.removeFromWaitingList(team2, function(err) {
           if (err) {
-            return form(request, reply, {
-              status: 'failed',
-              message: 'failed to remove ' + team2 + ' from waiting list'
-            });
+            console.log(err);
+            return reply.redirect('/');
           }
 
-          return form(request, reply, {status: 'success', message: 'event created'});
+          teams.moveWaitingList(show, '2', function(err) {
+            if (err) {
+              console.log(err);
+              return reply.redirect('/');
+            }
+
+            return reply.redirect('/');
+          });
         });
       });
     });
-  }
-
-  return {
-    form: form,
-    save: save
-  }
+  };
 };
